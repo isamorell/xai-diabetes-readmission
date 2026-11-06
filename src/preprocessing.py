@@ -2,6 +2,9 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
+from sklearn.compose import ColumnTransformer
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import FunctionTransformer, OneHotEncoder, StandardScaler
 
 from src.data import load_data
 import src.constants as cte
@@ -87,12 +90,42 @@ def preprocessing():
     # 5. Feature engineering that does not depend on the data distribution
     df = add_drug_features(df)
     df = group_diagnoses(df)
+    df[cte.CODED_ID_COLS] = df[cte.CODED_ID_COLS].astype(str)  # Coded IDs are categories
     
     # 6. Drop what is no longer needed
     df = df.drop(columns=cte.DIAG_COLS + cte.RARE_DRUGS)
     
     print(f"Final: {df.shape[0]:,} rows x {df.shape[1]} columns")
     return df
+
+def build_preprocessor(X_train: pd.DataFrame, scale: bool = True) -> ColumnTransformer:
+    """Column transformer for numerical and categorical features.
+    
+    scale = True -> linear models: log1p + standardisation of counts, standardised numerics.
+    scale = False -> tree models: numeric features pass through unchanged.
+
+    Categories below 1% of the training set are pooled into an "infrequent" level by the
+    OneHotEncoder. The threshold is learned from the training data only, so there is no leakage.
+    """
+
+    numeric_cols = [
+        col for col in cte.NUMERIC_COLS + ["n_drugs", "n_dose_changes"]
+        if col in X_train.columns
+    ]
+
+    categorical_cols = [col for col in X_train.columns if col not in numeric_cols]
+    
+    cat_pipeline = OneHotEncoder(handle_unknown="ignore")
+    if scale:
+        pre = ColumnTransformer([
+            ("cat", cat_pipeline, categorical_cols),
+            ("num", StandardScaler(), numeric_cols)
+        ])
+
+    else:
+        pre = ColumnTransformer([("cat", cat_pipeline, categorical_cols)])
+                    
+    return pre
 
 
 if __name__ == "__main__":

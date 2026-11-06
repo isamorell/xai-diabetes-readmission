@@ -1,3 +1,4 @@
+SEED = 2026
 TARGET = "readmitted"
 
 # -- Columns dropped at the start. --
