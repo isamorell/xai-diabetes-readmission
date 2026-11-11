@@ -41,3 +41,15 @@ NUMERIC_COLS = [
     "number_outpatient", "number_emergency", "number_inpatient", "number_diagnoses",
 ]
 CODED_ID_COLS = ["admission_type_id", "discharge_disposition_id", "admission_source_id"]
+
+
+# -- train constants --
+RANDOM_STATE = 42
+N_SPLITS = 5
+MAX_GAP = 0.03
+
+# Logistic Regression
+C = 0.5
+
+# XGBoost
+XGB_CONFIG = {"max_depth": 2, "learning_rate": 0.05, "n_estimators": 500, "min_child_weight": 20, "reg_lambda": 10, "gamma": 1}
